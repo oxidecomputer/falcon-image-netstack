@@ -47,7 +47,7 @@ export VARIANT=netstack
 export MACHINE=propolis
 
 # Shim calls to github to force https instead of ssh for cloning
-./evil-clone-hack.sh
+source ./evil-clone-hack.sh
 
 # We need the helios-engvm tooling to build our image. Masaka branch has
 # some special goodies added that are needed for netstack
