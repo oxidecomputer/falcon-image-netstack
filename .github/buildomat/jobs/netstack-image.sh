@@ -49,7 +49,7 @@ export MACHINE=propolis
 # We need the helios-engvm tooling to build our image. Masaka branch has
 # some special goodies added that are needed for netstack
 if [[ ! -d helios-engvm ]]; then
-    git clone --branch masaka git@github.com:oxidecomputer/helios-engvm.git
+    git clone --branch masaka https://github.com/oxidecomputer/helios-engvm.git
 fi
 
 pushd helios-engvm/image
@@ -59,7 +59,7 @@ pfexec ../../netstack-bits.sh
 
 # TODO remove this once the p5p branch is merged into upstream
 if [[ ! -d image-builder ]]; then
-    git clone --branch p5p git@github.com:rcgoodfellow/image-builder.git
+    git clone --branch p5p https://github.com/rcgoodfellow/image-builder.git
 fi
 
 ./setup.sh
