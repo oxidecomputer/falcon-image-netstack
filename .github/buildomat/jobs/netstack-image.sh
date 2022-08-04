@@ -62,9 +62,15 @@ if [[ ! -d image-builder ]]; then
     git clone --branch p5p https://github.com/rcgoodfellow/image-builder.git
 fi
 
-./setup.sh
-./strap.sh
-./image.sh
+if [[ $CI ]]; then
+    pfexec ./setup.sh
+    pfexec ./strap.sh
+    pfexec ./image.sh
+else
+    ./setup.sh
+    ./strap.sh
+    ./image.sh
+fi
 
 popd
 
