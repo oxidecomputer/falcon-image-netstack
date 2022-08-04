@@ -38,9 +38,6 @@ set -e
 set -o pipefail
 set -o xtrace
 
-pfexec ./falcon-bits.sh
-pfexec ./netstack-bits.sh
-
 IMAGE_NAME=netstack
 export VARIANT=netstack
 export MACHINE=propolis
@@ -52,6 +49,9 @@ if [[ ! -d helios-engvm ]]; then
 fi
 
 pushd helios-engvm/image
+
+pfexec ../../falcon-bits.sh
+pfexec ../../netstack-bits.sh
 
 # TODO remove this once the p5p branch is merged into upstream
 if [[ ! -d image-builder ]]; then
