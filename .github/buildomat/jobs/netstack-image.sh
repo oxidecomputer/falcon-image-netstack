@@ -13,6 +13,10 @@
 #:   "=/out/netstack.xz.sha256",
 #: ]
 #:
+#: access_repos = [
+#:   "oxidecomputer/helios-engvm",
+#: ]
+#:
 #: [[publish]]
 #: series = "image"
 #: name = "netstack.xz"
