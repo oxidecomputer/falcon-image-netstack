@@ -27,12 +27,13 @@ function fetch_and_verify {
         echo "fetching latest $1"
         curl -OL $PACKAGE_URL
         sha256sum --status -c "$1.sha256"
+        code=$?
     fi
 
     # abort script if we can't successfully retrieve package
     if [ $? -ne 0 ]; then
         echo "could not fetch $1"
-        exit $?
+        exit $code
     fi
 }
 

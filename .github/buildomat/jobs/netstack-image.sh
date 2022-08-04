@@ -15,6 +15,8 @@
 #:
 #: access_repos = [
 #:   "oxidecomputer/helios-engvm",
+#:   "oxidecomputer/os-build",
+#:   "oxidecomputer/maghemite",
 #: ]
 #:
 #: [[publish]]
@@ -47,7 +49,9 @@ export VARIANT=netstack
 export MACHINE=propolis
 
 # Shim calls to github to force https instead of ssh for cloning
-source ./evil-clone-hack.sh
+if [[ -n $CI ]]; then
+    source ./evil-clone-hack.sh
+fi
 
 # We need the helios-engvm tooling to build our image. Masaka branch has
 # some special goodies added that are needed for netstack
