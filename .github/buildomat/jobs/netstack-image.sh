@@ -46,6 +46,9 @@ IMAGE_NAME=netstack
 export VARIANT=netstack
 export MACHINE=propolis
 
+# Shim calls to github to force https instead of ssh for cloning
+./evil-clone-hack.sh
+
 # We need the helios-engvm tooling to build our image. Masaka branch has
 # some special goodies added that are needed for netstack
 if [[ ! -d helios-engvm ]]; then
@@ -62,7 +65,7 @@ if [[ ! -d image-builder ]]; then
     git clone --branch p5p https://github.com/rcgoodfellow/image-builder.git
 fi
 
-if [[ $CI ]]; then
+if [[ -n $CI ]]; then
     pfexec ./setup.sh
     pfexec ./strap.sh
     pfexec ./image.sh
