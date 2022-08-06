@@ -86,5 +86,5 @@ pfexec chown -R "$UID" /out
 cp version.txt /out/version.txt
 cp /rpool/images/output/helios-propolis-ttya-netstack.raw /out/$IMAGE_NAME
 sha256sum /out/$IMAGE_NAME > /out/$IMAGE_NAME.sha256
-xz -vv /out/$IMAGE_NAME
+xz -T 0 -vv /out/$IMAGE_NAME
 sha256sum /out/$IMAGE_NAME.xz > /out/$IMAGE_NAME.xz.sha256
