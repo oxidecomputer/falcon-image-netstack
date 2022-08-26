@@ -12,9 +12,6 @@
 #: ]
 #:
 #: access_repos = [
-#:   "oxidecomputer/falcon-image-netstack",
-#:   "oxidecomputer/falcon",
-#:   "oxidecomputer/propolis",
 #:   "oxidecomputer/testbed",
 #: ]
 #:
