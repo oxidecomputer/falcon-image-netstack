@@ -14,6 +14,9 @@
 #:
 #: skip_clone = true
 #:
+#: [dependencies.image]
+#: job = "netstack-image"
+#
 #: [dependencies.build]
 #: job = "netstack-prepare"
 #
@@ -25,6 +28,10 @@ set -o xtrace
 
 export RUST_LOG=debug
 
+# TODO remove
+ls -lah /input/image/out/
+
+exit 0
 #
 # This function is for convenience, since the falcon scripts rely on
 # aliases that are usually present on end-user machines, but not in CI
@@ -123,14 +130,41 @@ export FALCON_DATASET=netstack-validation/falcon
 #
 ./get-propolis.sh
 ./get-ovmf.sh
-./get-netstack.sh
+
+function extract_and_verify {
+    set +e
+    sha256sum --status -c "$IMAGE_NAME.sha256"
+    status=$?
+    set -e
+    if [ $status -eq 0 ]; then
+        echo "image already extracted"
+    else
+        echo "extracting image"
+        unxz -T 0 -c -vv $IMAGE_NAME.xz > $VERSION.raw
+        sha256sum --status -c "$IMAGE_NAME.sha256"
+    fi
+}
+
+extract_and_verify $IMAGE_NAME
+
+name=${VERSION%_*}
+if [[ ! -b /dev/zvol/dsk/$dataset/img/$name ]]; then
+    echo "Creating ZFS volume $name"
+    pfexec zfs create -p -V 20G "$dataset/img/$name"
+    echo "Copying contents of image $VERSION into volume"
+    pfexec dd if=$VERSION.raw of="/dev/zvol/dsk/$dataset/img/$name" conv=sync
+    echo "Creating base image snapshot"
+    pfexec zfs snapshot "$dataset/img/$name@base"
+else
+    echo "volume already created for $name"
+fi
 
 popd
 
 #
-# Set the version of netstack to user
+# Set the version of netstack to use
 #
-VERSION=$(cat version.txt)
+IMAGE=$(zfs list -o name | grep netstack | xargs basename)
 export IMAGE=${VERSION%_*}
 
 #
