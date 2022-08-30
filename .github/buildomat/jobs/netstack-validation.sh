@@ -28,10 +28,6 @@ set -o xtrace
 
 export RUST_LOG=debug
 
-# TODO remove
-ls -lah /input/image/out/
-
-exit 0
 #
 # This function is for convenience, since the falcon scripts rely on
 # aliases that are usually present on end-user machines, but not in CI
@@ -120,52 +116,37 @@ export PATH="$(pwd)/bin:$PATH"
 pushd falcon
 
 #
+# Install tooling and images needed for the falcon topology
+#
+./get-propolis.sh
+./get-ovmf.sh
+
+#
 # Create the zpool used for extracting our falcon topology images
 #
 pfexec zpool create -f netstack-validation c1t1d0
 export FALCON_DATASET=netstack-validation/falcon
 
 #
-# Install tooling and images needed for the falcon topology
+# Extract new image into zpool
 #
-./get-propolis.sh
-./get-ovmf.sh
+VERSION=$(cat /input/image/out/version.txt)
+IMAGE_NAME=netstack
+export IMAGE=${VERSION%_*}
 
-function extract_and_verify {
-    set +e
-    sha256sum --status -c "$IMAGE_NAME.sha256"
-    status=$?
-    set -e
-    if [ $status -eq 0 ]; then
-        echo "image already extracted"
-    else
-        echo "extracting image"
-        unxz -T 0 -c -vv $IMAGE_NAME.xz > $VERSION.raw
-        sha256sum --status -c "$IMAGE_NAME.sha256"
-    fi
-}
+echo "extracting image"
+unxz -T 0 -c -vv "/input/image/out/$IMAGE_NAME.xz" > "$VERSION.raw"
+ls -lah
+# sha256sum --status -c "/input/image/out/$IMAGE_NAME.sha256"
 
-extract_and_verify $IMAGE_NAME
-
-name=${VERSION%_*}
-if [[ ! -b /dev/zvol/dsk/$dataset/img/$name ]]; then
-    echo "Creating ZFS volume $name"
-    pfexec zfs create -p -V 20G "$dataset/img/$name"
-    echo "Copying contents of image $VERSION into volume"
-    pfexec dd if=$VERSION.raw of="/dev/zvol/dsk/$dataset/img/$name" conv=sync
-    echo "Creating base image snapshot"
-    pfexec zfs snapshot "$dataset/img/$name@base"
-else
-    echo "volume already created for $name"
-fi
+echo "Creating ZFS volume $IMAGE"
+pfexec zfs create -p -V 20G "$FALCON_DATASET/img/$IMAGE"
+echo "Copying contents of image $VERSION into volume"
+pfexec dd if=$VERSION.raw of="/dev/zvol/dsk/$FALCON_DATASET/img/$IMAGE" conv=sync
+echo "Creating base image snapshot"
+pfexec zfs snapshot "$FALCON_DATASET/img/$IMAGE@base"
 
 popd
-
-#
-# Set the version of netstack to use
-#
-IMAGE=$(zfs list -o name | grep netstack | xargs basename)
-export IMAGE=${VERSION%_*}
 
 #
 # Run the test
