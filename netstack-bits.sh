@@ -77,6 +77,11 @@ cp /opt/xde.p5p .
 cp /opt/mg.p5p .
 cp /opt/opte.p5p .
 
-# get the p9kp binary from oxidecomputer/p9fs ci
-echo "fetching p9kp"
-curl -OL https://buildomat.eng.oxide.computer/wg/0/artefact/01FWVH16QWB4FCKHNDADG2F8ZN/FmPrmgdSkn44eowjPWFoqikXynga4oJYhHcoBAwjB8E531tv/01FWVH1E7GXY0TRVZYGT7GJ789/01FWVHADFJEW082REBMJMJDC5R/p9kp
+banner p9kp
+REPO='oxidecomputer/p9fs'
+get_current_branch
+PACKAGE_BASE_URL="$ARTIFACT_URL/$REPO/p9kp/$SHA"
+PACKAGE_URL="$PACKAGE_BASE_URL/p9kp"
+PACKAGE_SHA_URL="$PACKAGE_BASE_URL/p9kp.sha256"
+curl -L $PACKAGE_SHA_URL | sed 's/\/work\/release\///' > p9kp.sha256
+fetch_and_verify p9kp

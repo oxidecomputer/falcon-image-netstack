@@ -14,6 +14,9 @@
 #:
 #: skip_clone = true
 #:
+#: [dependencies.image]
+#: job = "netstack-image"
+#
 #: [dependencies.build]
 #: job = "netstack-prepare"
 #
@@ -113,25 +116,37 @@ export PATH="$(pwd)/bin:$PATH"
 pushd falcon
 
 #
+# Install tooling and images needed for the falcon topology
+#
+./get-propolis.sh
+./get-ovmf.sh
+
+#
 # Create the zpool used for extracting our falcon topology images
 #
 pfexec zpool create -f netstack-validation c1t1d0
 export FALCON_DATASET=netstack-validation/falcon
 
 #
-# Install tooling and images needed for the falcon topology
+# Extract new image into zpool
 #
-./get-propolis.sh
-./get-ovmf.sh
-./get-netstack.sh
+VERSION=$(cat /input/image/out/version.txt)
+IMAGE_NAME=netstack
+export IMAGE=${VERSION%_*}
+
+echo "extracting image"
+unxz -T 0 -c -vv "/input/image/out/$IMAGE_NAME.xz" > "$VERSION.raw"
+ls -lah
+# sha256sum --status -c "/input/image/out/$IMAGE_NAME.sha256"
+
+echo "Creating ZFS volume $IMAGE"
+pfexec zfs create -p -V 20G "$FALCON_DATASET/img/$IMAGE"
+echo "Copying contents of image $VERSION into volume"
+pfexec dd if=$VERSION.raw of="/dev/zvol/dsk/$FALCON_DATASET/img/$IMAGE" conv=sync
+echo "Creating base image snapshot"
+pfexec zfs snapshot "$FALCON_DATASET/img/$IMAGE@base"
 
 popd
-
-#
-# Set the version of netstack to user
-#
-VERSION=$(cat version.txt)
-export IMAGE=${VERSION%_*}
 
 #
 # Run the test

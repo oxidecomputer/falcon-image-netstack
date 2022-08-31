@@ -20,8 +20,6 @@
 #: name = "build-tools.tar.xz"
 #: from_output = "/out/build-tools.tar.xz"
 #:
-#: [dependencies.build]
-#: job = "netstack-image"
 #
 
 set -e

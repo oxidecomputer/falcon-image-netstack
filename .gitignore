@@ -1,3 +1,6 @@
 helios-engvm/
 falcon/
 testbed/
+*.p5p
+p9kp
+*.sha256
