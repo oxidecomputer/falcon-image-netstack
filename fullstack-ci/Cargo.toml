@@ -1,0 +1,9 @@
+[package]
+name = "fullstack-ci"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+futures = "0.3.24"
+libfalcon = { git = "https://github.com/oxidecomputer/falcon" }
+tokio = { version = "1.0", features = ["full"] }

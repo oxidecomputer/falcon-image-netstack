@@ -4,3 +4,4 @@ testbed/
 *.p5p
 p9kp
 *.sha256
+**/.falcon/

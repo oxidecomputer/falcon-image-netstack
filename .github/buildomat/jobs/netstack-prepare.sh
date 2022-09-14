@@ -13,6 +13,7 @@
 #:
 #: access_repos = [
 #:   "oxidecomputer/testbed",
+#:   "oxidecomputer/p4",
 #: ]
 #:
 #: [[publish]]
@@ -32,14 +33,6 @@ export RUST_LOG=debug
 dladm show-link
 topdir=$(pwd)
 
-mkdir bin
-
-pushd bin
-curl -OL https://github.com/stedolan/jq/releases/download/jq-1.4/jq-solaris11-64
-mv jq-solaris11-64 jq
-chmod +x jq
-popd
-
 #
 # Shim calls to github to force https instead of ssh for cloning
 #
@@ -57,20 +50,50 @@ if [[ ! -d falcon ]]; then
 fi
 
 #
-# Clone the testbed repo
-# We need the testbed repo because it contains the particular topology we'll be running
-# in our CI task
+# Clone the softnpu branch of propolis
+# We need this so we can build softnpuadm, which is needed for ASIC emulation
+# in our scrimlet CI nodes
 #
-if [[ ! -d testbed ]]; then
-    git clone https://github.com/oxidecomputer/testbed.git
+if [[ ! -d propolis ]]; then
+    git clone --branch softnpu-dyload https://github.com/oxidecomputer/propolis.git
 fi
+
+pushd propolis
+cargo build --release
+cp target/debug/propolis-cli "$topdir/bin/"
+cp target/debug/propolis-server "$topdir/bin/"
+cp target/debug/propolis-standalone "$topdir/bin/"
+cargo clean
+popd
+
+pushd propolis/softnpuadm
+cargo build
+cp target/debug/softnpuadm "$topdir/bin/"
+cargo clean
+popd
+
+#
+# Clone the p4 repo
+# We need the p4 program from this repo for programming softnpu's forwarding logic
+#
+if [[ ! -d p4 ]]; then
+    git clone https://github.com/oxidecomputer/p4.git
+fi
+
+pushd p4
+cargo build
+mkdir -p "$topdir/fullstack-ci/cargo-bay/p4"
+cp target/debug/lib* "$topdir/fullstack-ci/cargo-bay/p4"
+cp target/debug/p4* "$topdir/fullstack-ci/cargo-bay/p4"
+cp target/debug/x4c* "$topdir/fullstack-ci/cargo-bay/p4"
+popd
 
 #
 # Build the halfstack-2x2-ci falcon topology binary for use in our next CI task
 #
-pushd testbed/halfstack-2x2-ci
+pushd fullstack-ci
 cargo build
-cp ../target/debug/halfstack-2x2-ci "$topdir/bin/"
+cp target/debug/fullstack-ci "$topdir/bin/"
 cargo clean
 popd
 
