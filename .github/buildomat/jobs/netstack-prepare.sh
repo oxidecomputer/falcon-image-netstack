@@ -30,9 +30,13 @@ set -o xtrace
 
 export RUST_LOG=debug
 
-# List the host's interfaces
-dladm show-link
+
 topdir=$(pwd)
+
+#
+# Install required build tooling
+#
+pfexec pkg install build-essential
 
 #
 # Shim calls to github to force https instead of ssh for cloning
