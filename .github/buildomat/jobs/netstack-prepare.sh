@@ -12,8 +12,9 @@
 #: ]
 #:
 #: access_repos = [
-#:   "oxidecomputer/testbed",
+#:   "oxidecomputer/dendrite",
 #:   "oxidecomputer/p4",
+#:   "oxidecomputer/testbed",
 #: ]
 #:
 #: [[publish]]
@@ -59,16 +60,19 @@ if [[ ! -d propolis ]]; then
 fi
 
 pushd propolis
-cargo build --release
-cp target/debug/propolis-cli "$topdir/bin/"
-cp target/debug/propolis-server "$topdir/bin/"
-cp target/debug/propolis-standalone "$topdir/bin/"
+cargo build --features falcon --release
+mkdir -p "$topdir/bin/propolis"
+cp target/release/lib* "$topdir/bin/propolis"
+cp target/release/propolis-cli* "$topdir/bin/propolis"
+cp target/release/propolis-server* "$topdir/bin/propolis"
+cp target/release/propolis-standalone* "$topdir/bin/propolis"
 cargo clean
 popd
 
 pushd propolis/softnpuadm
 cargo build
-cp target/debug/softnpuadm "$topdir/bin/"
+mkdir -p "$topdir/fullstack-ci/cargo-bay/softnpuadm"
+cp ../target/debug/softnpuadm "$topdir/fullstack-ci/cargo-bay/softnpuadm"
 cargo clean
 popd
 
@@ -86,7 +90,31 @@ mkdir -p "$topdir/fullstack-ci/cargo-bay/p4"
 cp target/debug/lib* "$topdir/fullstack-ci/cargo-bay/p4"
 cp target/debug/p4* "$topdir/fullstack-ci/cargo-bay/p4"
 cp target/debug/x4c* "$topdir/fullstack-ci/cargo-bay/p4"
+cargo clean
 popd
+
+#
+# Clone the dendrite repo
+# We need to build a custom branch of dendrite in order to use softnpu
+# ASIC emulation
+#
+if [[ ! -d dendrite ]]; then
+    git clone --branch softnpu https://github.com/oxidecomputer/dendrite.git
+fi
+
+pushd dendrite
+cargo build --features softnpu
+mkdir -p "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/debug/lib* "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/debug/dpd "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/debug/dsyncd "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/debug/protod "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/debug/swadm "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/debug/tests "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/debug/xtask "$topdir/fullstack-ci/cargo-bay/dendrite"
+cargo clean
+popd
+
 
 #
 # Build the halfstack-2x2-ci falcon topology binary for use in our next CI task

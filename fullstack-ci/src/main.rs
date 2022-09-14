@@ -81,7 +81,7 @@ async fn main() -> Result<(), Error> {
             let number = idx + 1;
 
             init_node(&d, node, number).await?;
-            init_underlay(&d, node, number).await?;
+            // init_underlay(&d, node, number).await?;
         }
     }
 

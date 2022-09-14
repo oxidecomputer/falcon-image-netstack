@@ -59,6 +59,11 @@ if [[ ! -v EXT_INTERFACE ]]; then
     export EXT_INTERFACE=igb0
 fi
 
+if [[ ! -v DISK ]]; then
+    echo "DISK has been set. This will default to c1t1d0"
+    export DISK=c1t1d0
+fi
+
 #
 # Create a private ip address for the host to use for communication with the
 # falcon topology VMs
@@ -111,12 +116,12 @@ pfexec ipnat -l
 #
 # Extract the tools needed for launching the falcon topology
 #
-mkdir /tmp/netstack-validation
+mkdir -p /tmp/netstack-validation
 pushd /tmp/netstack-validation
 xzcat /input/build/out/build-tools.tar.xz | tar -xf -
 
 #
-# Add jq and halfstack-2x2-ci to our PATH
+# Add jq and fullstack-ci to our PATH
 #
 pushd falcon-image-netstack
 export PATH="$(pwd)/bin:$PATH"
@@ -134,7 +139,7 @@ pushd falcon
 #
 # Create the zpool used for extracting our falcon topology images
 #
-pfexec zpool create -f netstack-validation c1t1d0
+pfexec zpool create -f netstack-validation $DISK
 export FALCON_DATASET=netstack-validation/falcon
 
 #
@@ -162,4 +167,4 @@ popd
 # Run the test
 #
 pushd fullstack-ci
-pfexec fullstack-ci launch
+pfexec fullstack-ci launch --propolis "../bin/propolis/propolis-server"
