@@ -36,7 +36,7 @@ topdir=$(pwd)
 #
 # Install required build tooling
 #
-pfexec pkg install build-essential
+pfexec pkg install pkg:/ooce/developer/clang-120@12.0.0-1.0
 
 #
 # Shim calls to github to force https instead of ssh for cloning
