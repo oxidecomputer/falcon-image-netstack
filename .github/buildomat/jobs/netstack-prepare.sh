@@ -74,9 +74,9 @@ cargo clean
 popd
 
 pushd propolis/softnpuadm
-cargo build
+cargo build --release
 mkdir -p "$topdir/fullstack-ci/cargo-bay/softnpuadm"
-cp ../target/debug/softnpuadm "$topdir/fullstack-ci/cargo-bay/softnpuadm"
+cp ../target/release/softnpuadm "$topdir/fullstack-ci/cargo-bay/softnpuadm"
 cargo clean
 popd
 
@@ -89,11 +89,11 @@ if [[ ! -d p4 ]]; then
 fi
 
 pushd p4
-cargo build
+cargo build --release
 mkdir -p "$topdir/fullstack-ci/cargo-bay/p4"
-cp target/debug/lib* "$topdir/fullstack-ci/cargo-bay/p4"
-cp target/debug/p4* "$topdir/fullstack-ci/cargo-bay/p4"
-cp target/debug/x4c* "$topdir/fullstack-ci/cargo-bay/p4"
+cp target/release/lib* "$topdir/fullstack-ci/cargo-bay/p4"
+cp target/release/p4* "$topdir/fullstack-ci/cargo-bay/p4"
+cp target/release/x4c* "$topdir/fullstack-ci/cargo-bay/p4"
 cargo clean
 popd
 
@@ -107,15 +107,15 @@ if [[ ! -d dendrite ]]; then
 fi
 
 pushd dendrite
-cargo build --features softnpu
+cargo build --features softnpu --release
 mkdir -p "$topdir/fullstack-ci/cargo-bay/dendrite"
-cp target/debug/lib* "$topdir/fullstack-ci/cargo-bay/dendrite"
-cp target/debug/dpd "$topdir/fullstack-ci/cargo-bay/dendrite"
-cp target/debug/dsyncd "$topdir/fullstack-ci/cargo-bay/dendrite"
-cp target/debug/protod "$topdir/fullstack-ci/cargo-bay/dendrite"
-cp target/debug/swadm "$topdir/fullstack-ci/cargo-bay/dendrite"
-cp target/debug/tests "$topdir/fullstack-ci/cargo-bay/dendrite"
-cp target/debug/xtask "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/lib* "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/dpd "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/dsyncd "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/protod "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/swadm "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/tests "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/xtask "$topdir/fullstack-ci/cargo-bay/dendrite"
 cargo clean
 popd
 
@@ -124,8 +124,8 @@ popd
 # Build the halfstack-2x2-ci falcon topology binary for use in our next CI task
 #
 pushd fullstack-ci
-cargo build
-cp target/debug/fullstack-ci "$topdir/bin/"
+cargo build --release
+cp target/release/fullstack-ci "$topdir/bin/"
 cargo clean
 popd
 
