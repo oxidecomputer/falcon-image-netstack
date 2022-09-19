@@ -13,6 +13,7 @@
 #:
 #: access_repos = [
 #:   "oxidecomputer/dendrite",
+#:   "oxidecomputer/maghemite",
 #:   "oxidecomputer/p4",
 #:   "oxidecomputer/testbed",
 #: ]
@@ -119,6 +120,27 @@ cp target/release/xtask "$topdir/fullstack-ci/cargo-bay/dendrite"
 cargo clean
 popd
 
+#
+# Clone the maghemite repo
+# Maghemite is already available on the image, but we need to pull the latest
+# development branch to test dpd integration
+#
+if [[ ! -d maghemite ]]; then
+    git clone --branch dpd-api https://github.com/oxidecomputer/maghemite.git
+fi
+
+pushd maghemite
+cargo build --release
+mkdir -p "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/ddm* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/lib* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/mg* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/solo* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/duo* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/trio* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/quartet* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cargo clean
+popd
 
 #
 # Build the halfstack-2x2-ci falcon topology binary for use in our next CI task

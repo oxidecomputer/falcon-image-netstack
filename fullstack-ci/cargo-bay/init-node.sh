@@ -45,9 +45,13 @@ banner "opte"
 # Configure router (maghemite)
 #
 banner "maghemite"
-svccfg -s mg-ddm setprop config/log=debug
-svccfg -s mg-ddm setprop config/interfaces = astring: '("vioif0/v6" "vioif1/v6")'
-svcadm enable mg-ddm
+#
+# TODO uncomment once development branch of maghemite is merged and new image is
+# released.
+#
+# svccfg -s mg-ddm setprop config/log=debug
+# svccfg -s mg-ddm setprop config/interfaces = astring: '("vioif0/v6" "vioif1/v6")'
+# svcadm enable mg-ddm
 sleep 5
 
 #
