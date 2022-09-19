@@ -13,8 +13,6 @@ if [[ ! -v NODE_NUM ]]; then
     exit 1
 fi
 
-NODE_HEX=$(printf '%x' "$NODE_NUM")
-
 #
 # Display kernel information
 #
@@ -41,6 +39,7 @@ ipadm create-addr -T addrconf vioif1/v6
 banner "opte"
 /opt/oxide/opte/bin/opteadm set-xde-underlay vioif0 vioif1
 
+banner "scrimlet"
 #
 # Configure router (maghemite)
 #
@@ -52,10 +51,10 @@ banner "maghemite"
 # svccfg -s mg-ddm setprop config/log=debug
 # svccfg -s mg-ddm setprop config/interfaces = astring: '("vioif0/v6" "vioif1/v6")'
 # svcadm enable mg-ddm
-
+#
 chmod +x /opt/cargo-bay/maghemite/ddmd
 chmod +x /opt/cargo-bay/maghemite/ddmadm
-/opt/cargo-bay/maghemite/ddmd 8000 ::1 vioif0/v6 vioif1/v6 server &
+/opt/cargo-bay/maghemite/ddmd 8000 ::1 vioif0/v6 vioif1/v6 transit --dendrite &
 sleep 5
 
 #
@@ -65,5 +64,25 @@ banner "underlay"
 ipadm create-addr -T static -a "192.168.100.$NODE_NUM" vioif2/v4
 route add default "192.168.100.100"
 
-ipadm create-addr -T static -a "fd00:$NODE_HEX::1/64" lo0/underlay
-/opt/oxide/mg-ddm/ddmadm advertise-prefix "fd00:$NODE_HEX::/64"
+#
+# Start data plane daemon
+#
+banner "dpd"
+chmod +x /opt/cargo-bay/dendrite/dpd
+/opt/cargo-bay/dendrite/dpd --domain none &
+
+#
+# Setup softnpu
+#
+banner "softnpu"
+chmod +x /opt/cargo-bay/softnpuadm/softnpuadm
+/opt/cargo-bay/softnpuadm/softnpuadm load-program /opt/cargo-bay/p4/libsidecar_lite.so
+/opt/cargo-bay/softnpuadm/softnpuadm add-address6 fe80::aae1:deff:fe01:701d
+/opt/cargo-bay/softnpuadm/softnpuadm add-address6 fe80::aae1:deff:fe01:701e
+
+#
+# Start dsyncd
+#
+banner "dsyncd"
+chmod +x /opt/cargo-bay/dendrite/dsyncd
+/opt/cargo-bay/dendrite/dsyncd --port 12224 &

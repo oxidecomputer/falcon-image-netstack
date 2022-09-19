@@ -79,9 +79,23 @@ async fn main() -> Result<(), Error> {
     if let RunMode::Launch = run(&mut d).await? {
         for (idx, node) in topology.iter().enumerate() {
             let number = idx + 1;
+            let name = &d.get_node(*node).name;
 
-            init_node(&d, node, number).await?;
-            // init_underlay(&d, node, number).await?;
+            if name.contains("scrimlet") {
+                init_scrimlet(&d, node, number).await?;
+            } else {
+                init_node(&d, node, number).await?;
+            }
+        }
+
+        let sled1_output = d.exec(sled1, "ping fd00:2::1").await?;
+        if !sled1_output.contains("fd00:2::1 is alive") {
+            return Err(Error::Exec(sled1_output));
+        }
+
+        let sled2_output = d.exec(sled2, "ping fd00:1::1").await?;
+        if !sled2_output.contains("fd00:1::1 is alive") {
+            return Err(Error::Exec(sled1_output));
         }
     }
 
@@ -101,13 +115,28 @@ async fn exec_commands(runner: &Runner, node_ref: &NodeRef, commands: &[&str]) -
 }
 
 ///
-/// Configuration needed for sleds and scrimlets
+/// Configuration needed for normal sleds
 ///
 async fn init_node(runner: &Runner, node_ref: &NodeRef, number: usize) -> Result<(), Error> {
     display(runner.get_node(*node_ref), "initializing node...");
     let commands = &[
         "chmod +x /opt/cargo-bay/init-node.sh",
         &format!("NODE_NUM={} /opt/cargo-bay/init-node.sh", number),
+    ];
+    exec_commands(runner, node_ref, commands).await?;
+    Ok(())
+}
+
+///
+///  Configuration needed for scrimlets
+///
+
+async fn init_scrimlet(runner: &Runner, node_ref: &NodeRef, number: usize) -> Result<(), Error> {
+    let node = runner.get_node(*node_ref);
+    display(node, "initializing node...");
+    let commands: &[&str] = &[
+        &format!("chmod +x /opt/cargo-bay/init-{}.sh", node.name),
+        &format!("NODE_NUM={} /opt/cargo-bay/init-{}.sh", number, node.name),
     ];
     exec_commands(runner, node_ref, commands).await?;
     Ok(())
