@@ -4,7 +4,7 @@ use libfalcon::{
     cli::{run, RunMode},
     error::Error,
     unit::gb,
-    Runner, NodeRef, Node,
+    Node, NodeRef, Runner,
 };
 
 #[tokio::main]
@@ -88,14 +88,32 @@ async fn main() -> Result<(), Error> {
             }
         }
 
-        let sled1_output = d.exec(sled1, "ping fd00:2::1").await?;
-        if !sled1_output.contains("fd00:2::1 is alive") {
-            return Err(Error::Exec(sled1_output));
+        let sled1_path1_test = d
+            .exec(sled1, "ping -N fe80::aae1:deff:fe01:701b fd00:2::1")
+            .await?;
+        if !sled1_path1_test.contains("fd00:2::1 is alive") {
+            return Err(Error::Exec(sled1_path1_test));
         }
 
-        let sled2_output = d.exec(sled2, "ping fd00:1::1").await?;
-        if !sled2_output.contains("fd00:1::1 is alive") {
-            return Err(Error::Exec(sled1_output));
+        let sled1_path2_test = d
+            .exec(sled1, "ping -N fe80::aae1:deff:fe01:701d fd00:2::1")
+            .await?;
+        if !sled1_path2_test.contains("fd00:2::1 is alive") {
+            return Err(Error::Exec(sled1_path2_test));
+        }
+
+        let sled2_path1_test = d
+            .exec(sled2, "ping -N fe80::aae1:deff:fe01:701c fd00:1::1")
+            .await?;
+        if !sled2_path1_test.contains("fd00:1::1 is alive") {
+            return Err(Error::Exec(sled2_path1_test));
+        }
+
+        let sled2_path2_test = d
+            .exec(sled2, "ping -N fe80::aae1:deff:fe01:701e fd00:1::1")
+            .await?;
+        if !sled2_path2_test.contains("fd00:1::1 is alive") {
+            return Err(Error::Exec(sled2_path2_test));
         }
     }
 
@@ -106,7 +124,11 @@ fn display(node: &Node, text: &str) {
     println!("\n{}:\n\n{}\n", node.name, text);
 }
 
-async fn exec_commands(runner: &Runner, node_ref: &NodeRef, commands: &[&str]) -> Result<(), Error> {
+async fn exec_commands(
+    runner: &Runner,
+    node_ref: &NodeRef,
+    commands: &[&str],
+) -> Result<(), Error> {
     for command in commands {
         let stdout = runner.exec(*node_ref, command).await?;
         display(runner.get_node(*node_ref), &stdout)
@@ -130,7 +152,6 @@ async fn init_node(runner: &Runner, node_ref: &NodeRef, number: usize) -> Result
 ///
 ///  Configuration needed for scrimlets
 ///
-
 async fn init_scrimlet(runner: &Runner, node_ref: &NodeRef, number: usize) -> Result<(), Error> {
     let node = runner.get_node(*node_ref);
     display(node, "initializing node...");
