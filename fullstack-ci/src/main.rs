@@ -26,7 +26,10 @@ async fn main() -> Result<(), Error> {
     let scrimlet1 = d.node("scrimlet1", image, 4, gb(16));
     let scrimlet2 = d.node("scrimlet2", image, 4, gb(16));
 
-    let topology = [sled1, sled2, scrimlet1, scrimlet2];
+    // External gateway
+    let gateway = d.node("gateway", image, 2, gb(2));
+
+    let topology = [sled1, sled2, scrimlet1, scrimlet2, gateway];
 
     //
     // Inter-node links
@@ -36,29 +39,44 @@ async fn main() -> Result<(), Error> {
         scrimlet1,
         sled1,
         Some("a8:e1:de:00:00:01".into()),
-        Some("a8:e1:de:01:70:1b".into()),
+        Some("a8:e1:de:01:70:1a".into()),
     );
 
     d.softnpu_link(
         scrimlet1,
         sled2,
         Some("a8:e1:de:00:00:02".into()),
-        Some("a8:e1:de:01:70:1c".into()),
+        Some("a8:e1:de:01:70:1b".into()),
     );
 
     d.softnpu_link(
         scrimlet2,
         sled1,
         Some("a8:e1:de:00:01:01".into()),
-        Some("a8:e1:de:01:70:1d".into()),
+        Some("a8:e1:de:01:70:1c".into()),
     );
 
     d.softnpu_link(
         scrimlet2,
         sled2,
         Some("a8:e1:de:00:01:02".into()),
+        Some("a8:e1:de:01:70:1d".into()),
+    );
+
+    d.softnpu_link(
+        scrimlet1,
+        gateway,
+        Some("a8:e1:de:00:02:01".into()),
         Some("a8:e1:de:01:70:1e".into()),
     );
+
+    d.softnpu_link(
+        scrimlet2,
+        gateway,
+        Some("a8:e1:de:00:02:02".into()),
+        Some("a8:e1:de:01:70:1f".into()),
+    );
+
 
     //
     // External links
@@ -89,28 +107,28 @@ async fn main() -> Result<(), Error> {
         }
 
         let sled1_path1_test = d
-            .exec(sled1, "ping -N fe80::aae1:deff:fe01:701b fd00:2::1")
+            .exec(sled1, "ping -N fe80::aae1:deff:fe01:701a fd00:2::1")
             .await?;
         if !sled1_path1_test.contains("fd00:2::1 is alive") {
             return Err(Error::Exec(sled1_path1_test));
         }
 
         let sled1_path2_test = d
-            .exec(sled1, "ping -N fe80::aae1:deff:fe01:701d fd00:2::1")
+            .exec(sled1, "ping -N fe80::aae1:deff:fe01:701c fd00:2::1")
             .await?;
         if !sled1_path2_test.contains("fd00:2::1 is alive") {
             return Err(Error::Exec(sled1_path2_test));
         }
 
         let sled2_path1_test = d
-            .exec(sled2, "ping -N fe80::aae1:deff:fe01:701c fd00:1::1")
+            .exec(sled2, "ping -N fe80::aae1:deff:fe01:701b fd00:1::1")
             .await?;
         if !sled2_path1_test.contains("fd00:1::1 is alive") {
             return Err(Error::Exec(sled2_path1_test));
         }
 
         let sled2_path2_test = d
-            .exec(sled2, "ping -N fe80::aae1:deff:fe01:701e fd00:1::1")
+            .exec(sled2, "ping -N fe80::aae1:deff:fe01:701d fd00:1::1")
             .await?;
         if !sled2_path2_test.contains("fd00:1::1 is alive") {
             return Err(Error::Exec(sled2_path2_test));

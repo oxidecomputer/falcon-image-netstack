@@ -39,6 +39,13 @@ ipadm create-addr -T addrconf vioif1/v6
 banner "opte"
 /opt/oxide/opte/bin/opteadm set-xde-underlay vioif0 vioif1
 
+#
+# Out of band interface
+#
+banner "oob"
+ipadm create-addr -T static -a "192.168.100.$NODE_NUM" vioif2/v4
+route add default "192.168.100.100"
+
 banner "scrimlet"
 #
 # Configure router (maghemite)
@@ -58,13 +65,6 @@ chmod +x /opt/cargo-bay/maghemite/ddmadm
 sleep 5
 
 #
-# Configure underlay
-#
-banner "underlay"
-ipadm create-addr -T static -a "192.168.100.$NODE_NUM" vioif2/v4
-route add default "192.168.100.100"
-
-#
 # Start data plane daemon
 #
 banner "dpd"
@@ -72,17 +72,36 @@ chmod +x /opt/cargo-bay/dendrite/dpd
 /opt/cargo-bay/dendrite/dpd --domain none &
 
 #
-# Setup softnpu
-#
-banner "softnpu"
-chmod +x /opt/cargo-bay/softnpuadm/softnpuadm
-/opt/cargo-bay/softnpuadm/softnpuadm load-program /opt/cargo-bay/p4/libsidecar_lite.so
-/opt/cargo-bay/softnpuadm/softnpuadm add-address6 fe80::aae1:deff:fe01:701d
-/opt/cargo-bay/softnpuadm/softnpuadm add-address6 fe80::aae1:deff:fe01:701e
-
-#
 # Start dsyncd
 #
 banner "dsyncd"
 chmod +x /opt/cargo-bay/dendrite/dsyncd
 /opt/cargo-bay/dendrite/dsyncd --port 12224 &
+
+#
+# Setup softnpu
+#
+banner "softnpu"
+chmod +x /opt/cargo-bay/softnpuadm/softnpuadm
+/opt/cargo-bay/softnpuadm/softnpuadm load-program /opt/cargo-bay/p4/libsidecar_lite.so
+/opt/cargo-bay/softnpuadm/softnpuadm add-address6 fe80::aae1:deff:fe01:701c
+/opt/cargo-bay/softnpuadm/softnpuadm add-address6 fe80::aae1:deff:fe01:701d
+
+
+#
+# Default route to gateway
+#
+/opt/cargo-bay/softnpuadm/softnpuadm add-route4 0.0.0.0 0 4 192.168.100.1
+
+#
+# Static arp entry for gateway mac address
+#
+/opt/cargo-bay/softnpuadm/softnpuadm add-arp-entry 192.168.100.1 a8:e1:de:00:02:02
+
+#
+# Nat mappings
+#
+
+# sled1
+
+# sled2
