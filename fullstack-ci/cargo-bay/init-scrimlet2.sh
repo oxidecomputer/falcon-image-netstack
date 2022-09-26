@@ -43,7 +43,7 @@ banner "opte"
 # Out of band interface
 #
 banner "oob"
-ipadm create-addr -T static -a "192.168.100.$NODE_NUM" vioif2/v4
+ipadm create-addr -T static -a "192.168.100.$NODE_NUM" vioif3/v4
 route add default "192.168.100.100"
 
 banner "scrimlet"
@@ -91,12 +91,12 @@ chmod +x /opt/cargo-bay/softnpuadm/softnpuadm
 #
 # Default route to gateway
 #
-/opt/cargo-bay/softnpuadm/softnpuadm add-route4 0.0.0.0 0 4 192.168.100.1
+# /opt/cargo-bay/softnpuadm/softnpuadm add-route4 0.0.0.0 0 4 192.168.100.1
 
 #
 # Static arp entry for gateway mac address
 #
-/opt/cargo-bay/softnpuadm/softnpuadm add-arp-entry 192.168.100.1 a8:e1:de:00:02:02
+# /opt/cargo-bay/softnpuadm/softnpuadm add-arp-entry 192.168.100.1 a8:e1:de:00:02:02
 
 #
 # Nat mappings

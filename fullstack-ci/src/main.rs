@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, str::EncodeUtf16};
 
 use libfalcon::{
     cli::{run, RunMode},
@@ -101,8 +101,10 @@ async fn main() -> Result<(), Error> {
 
             if name.contains("scrimlet") {
                 init_scrimlet(&d, node, number).await?;
-            } else {
-                init_node(&d, node, number).await?;
+            } else if name.contains("sled"){
+                init_sled(&d, node, number).await?;
+            } else if name.contains("gateway") {
+                init_gateway(&d, node, number).await?;
             }
         }
 
@@ -157,7 +159,7 @@ async fn exec_commands(
 ///
 /// Configuration needed for normal sleds
 ///
-async fn init_node(runner: &Runner, node_ref: &NodeRef, number: usize) -> Result<(), Error> {
+async fn init_sled(runner: &Runner, node_ref: &NodeRef, number: usize) -> Result<(), Error> {
     display(runner.get_node(*node_ref), "initializing node...");
     let commands = &[
         "chmod +x /opt/cargo-bay/init-node.sh",
@@ -176,6 +178,20 @@ async fn init_scrimlet(runner: &Runner, node_ref: &NodeRef, number: usize) -> Re
     let commands: &[&str] = &[
         &format!("chmod +x /opt/cargo-bay/init-{}.sh", node.name),
         &format!("NODE_NUM={} /opt/cargo-bay/init-{}.sh", number, node.name),
+    ];
+    exec_commands(runner, node_ref, commands).await?;
+    Ok(())
+}
+
+///
+///  Configuration needed for gateway
+///
+async fn init_gateway(runner: &Runner, node_ref: &NodeRef, number: usize) -> Result<(), Error> {
+    let node = runner.get_node(*node_ref);
+    display(node, "initializing gateway...");
+    let commands: &[&str] = &[
+        "chmod +x /opt/cargo-bay/init-gateway.sh",
+        &format!("NODE_NUM={} /opt/cargo-bay/init-gateway.sh", number),
     ];
     exec_commands(runner, node_ref, commands).await?;
     Ok(())
