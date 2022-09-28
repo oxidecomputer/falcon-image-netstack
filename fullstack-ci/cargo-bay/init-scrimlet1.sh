@@ -32,12 +32,8 @@ echo "nameserver 8.8.8.8" > /etc/resolv.conf
 banner "interfaces"
 ipadm create-addr -T addrconf vioif0/v6
 ipadm create-addr -T addrconf vioif1/v6
-
-#
-# Configure OPTE
-#
-banner "opte"
-/opt/oxide/opte/bin/opteadm set-xde-underlay vioif0 vioif1
+ipadm create-addr -T static -a 10.100.101.2/24 vioif2/v4
+ipadm create-addr -T static -a fd00:99::1/128 lo0/boundsvcs
 
 #
 # Out of band interface
@@ -60,47 +56,65 @@ banner "maghemite"
 # svcadm enable mg-ddm
 #
 chmod +x /opt/cargo-bay/maghemite/ddmd
+cp /opt/cargo-bay/maghemite/ddmd /bin/
+
 chmod +x /opt/cargo-bay/maghemite/ddmadm
-/opt/cargo-bay/maghemite/ddmd 8000 ::1 vioif0/v6 vioif1/v6 transit --dendrite &
+cp /opt/cargo-bay/maghemite/ddmadm /bin/
+
+ddmd 8000 ::1 vioif0/v6 vioif1/v6 transit --dendrite &
 sleep 5
+
+ddmadm advertise-prefix "fd00:99::1/128"
 
 #
 # Start data plane daemon
 #
 banner "dpd"
 chmod +x /opt/cargo-bay/dendrite/dpd
-/opt/cargo-bay/dendrite/dpd --domain none &
+cp /opt/cargo-bay/dendrite/dpd /bin/
+
+dpd --domain none &
 
 #
 # Start dsyncd
 #
 banner "dsyncd"
 chmod +x /opt/cargo-bay/dendrite/dsyncd
-/opt/cargo-bay/dendrite/dsyncd --port 12224 &
+cp /opt/cargo-bay/dendrite/dsyncd /bin/
+
+dsyncd --port 12224 &
 
 #
 # Setup softnpu
 #
 banner "softnpu"
 chmod +x /opt/cargo-bay/softnpuadm/softnpuadm
-/opt/cargo-bay/softnpuadm/softnpuadm load-program /opt/cargo-bay/p4/libsidecar_lite.so
-/opt/cargo-bay/softnpuadm/softnpuadm add-address6 fe80::aae1:deff:fe01:701a
-/opt/cargo-bay/softnpuadm/softnpuadm add-address6 fe80::aae1:deff:fe01:701b
+cp /opt/cargo-bay/softnpuadm/softnpuadm /bin/
+
+softnpuadm load-program /opt/cargo-bay/p4/libsidecar_lite.so
+softnpuadm add-address6 fe80::aae1:deff:fe01:701a
+softnpuadm add-address6 fe80::aae1:deff:fe01:701b
+softnpuadm add-address6 fd00:99::1
 
 #
 # Default route to gateway
 #
-# /opt/cargo-bay/softnpuadm/softnpuadm add-route4 0.0.0.0 0 4 192.168.100.1
+softnpuadm add-route4 0.0.0.0 0 3 10.100.101.1
 
 #
 # Static arp entry for gateway mac address
 #
-# /opt/cargo-bay/softnpuadm/softnpuadm add-arp-entry 192.168.100.1 a8:e1:de:00:02:01
+softnpuadm add-arp-entry 10.100.101.1 a8:e1:de:00:02:01
 
 #
 # Nat mappings
 #
 
-# sled1
+# sled1 guest iz1
+softnpuadm add-nat4 10.100.1.10 1000 1999 fd00:1::1 10 a8:40:25:ff:00:01
 
-# sled2
+# sled2 guest iz2
+softnpuadm add-nat4 10.100.1.10 2000 2999 fd00:2::1 10 a8:40:25:ff:00:02
+
+# sled3 guest iz3
+softnpuadm add-nat4 10.100.1.10 3000 3999 fd00:1::1 10 a8:40:25:ff:00:03

@@ -67,3 +67,10 @@ route add default "192.168.100.100"
 
 ipadm create-addr -T static -a "fd00:$NODE_HEX::1/64" lo0/underlay
 /opt/oxide/mg-ddm/ddmadm advertise-prefix "fd00:$NODE_HEX::/64"
+
+#
+# Set permissions for zone creation and test scripts
+#
+chmod +x /opt/cargo-bay/create-instance-zone.sh
+chmod +x /opt/cargo-bay/create-v2p-mapping.sh
+chmod +x /opt/cargo-bay/test-overlay.sh
