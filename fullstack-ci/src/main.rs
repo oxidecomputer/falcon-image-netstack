@@ -111,13 +111,19 @@ async fn main() -> Result<(), Error> {
         //
         // Start guests
         //
-        d.exec(sled1, "NODE_NUM=1 GUEST_NUM=1 /opt/cargo-bay/create-instance-zone.sh").await?;
-        d.exec(sled1, "NODE_NUM=1 GUEST_NUM=3 /opt/cargo-bay/create-instance-zone.sh").await?;
-        d.exec(sled1, "NODE_NUM=2 GUEST_NUM=2 /opt/cargo-bay/create-v2p-mapping.sh").await?;
+        let commands = [
+            (sled1, "NODE_NUM=1 GUEST_NUM=1 /opt/cargo-bay/create-instance-zone.sh"),
+            (sled1, "NODE_NUM=1 GUEST_NUM=3 /opt/cargo-bay/create-instance-zone.sh"),
+            (sled1, "NODE_NUM=2 GUEST_NUM=2 /opt/cargo-bay/create-v2p-mapping.sh"),
+            (sled2, "NODE_NUM=2 GUEST_NUM=2 /opt/cargo-bay/create-instance-zone.sh"),
+            (sled2, "NODE_NUM=1 GUEST_NUM=1 /opt/cargo-bay/create-v2p-mapping.sh"),
+            (sled2, "NODE_NUM=1 GUEST_NUM=3 /opt/cargo-bay/create-v2p-mapping.sh"),
+        ];
 
-        d.exec(sled2, "NODE_NUM=2 GUEST_NUM=2 /opt/cargo-bay/create-instance-zone.sh").await?;
-        d.exec(sled2, "NODE_NUM=1 GUEST_NUM=1 /opt/cargo-bay/create-v2p-mapping.sh").await?;
-        d.exec(sled2, "NODE_NUM=1 GUEST_NUM=3 /opt/cargo-bay/create-v2p-mapping.sh").await?;
+        for (node, command)  in commands {
+            let stdout = d.exec(node, command).await?;
+            display(d.get_node(node), &stdout);
+        }
 
         let sled1_path1_test = d
             .exec(sled1, "ping -N fe80::aae1:deff:fe01:701a fd00:2::1")
