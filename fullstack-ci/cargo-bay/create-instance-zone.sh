@@ -57,12 +57,12 @@ snat_ip=10.100.1.10
 
 dladm create-vnic -t -l "$name" -m "$instance_mac" "$vnic"
 
-/opt/oxide/opte/bin/opteadm add-router-entry-ipv4 \
+/opt/oxide/opte/bin/opteadm add-router-entry \
 -p "$name" \
 10.0.0.0/24 \
 sub4=10.0.0.0/24
 
-/opt/oxide/opte/bin/opteadm add-router-entry-ipv4 -p "$name" '0.0.0.0/0' ig
+/opt/oxide/opte/bin/opteadm add-router-entry -p "$name" '0.0.0.0/0' ig
 
 zfs create -p -o mountpoint=/instance-test-zones rpool/instance-test-zones
 pkg set-publisher --search-first helios-dev
