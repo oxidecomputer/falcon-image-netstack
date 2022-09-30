@@ -39,7 +39,6 @@ source_underlay_addr="fd00:$NODE_NUM::1"
 snat_start="$GUEST_NUM"000
 snat_end="$GUEST_NUM"999
 snat_ip=10.100.1.10
-snat_gw_mac=a8:e1:de:00:02:01 # this is not meaningful
 
 /opt/oxide/opte/bin/opteadm create-xde \
 "$name" \
@@ -54,8 +53,7 @@ snat_gw_mac=a8:e1:de:00:02:01 # this is not meaningful
 --src-underlay-addr "$source_underlay_addr" \
 --snat-start "$snat_start" \
 --snat-end "$snat_end" \
---snat-ip "$snat_ip" \
---snat-gw-mac "$snat_gw_mac"
+--snat-ip "$snat_ip"
 
 dladm create-vnic -t -l "$name" -m "$instance_mac" "$vnic"
 
