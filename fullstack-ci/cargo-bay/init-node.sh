@@ -5,8 +5,6 @@ set -m
 set -o pipefail
 set -o xtrace
 
-export RUST_LOG=debug
-
 #
 # Check for node number used to generate addresses
 #
