@@ -131,6 +131,7 @@ async fn main() -> Result<(), Error> {
         if !sled1_path1_test.contains("fd00:2::1 is alive") {
             return Err(Error::Exec(sled1_path1_test));
         }
+        println!("{}", sled1_path1_test);
 
         let sled1_path2_test = d
             .exec(sled1, "ping -N fe80::aae1:deff:fe01:701c fd00:2::1")
@@ -138,6 +139,7 @@ async fn main() -> Result<(), Error> {
         if !sled1_path2_test.contains("fd00:2::1 is alive") {
             return Err(Error::Exec(sled1_path2_test));
         }
+        println!("{}", sled1_path2_test);
 
         let sled2_path1_test = d
             .exec(sled2, "ping -N fe80::aae1:deff:fe01:701b fd00:1::1")
@@ -145,6 +147,7 @@ async fn main() -> Result<(), Error> {
         if !sled2_path1_test.contains("fd00:1::1 is alive") {
             return Err(Error::Exec(sled2_path1_test));
         }
+        println!("{}", sled2_path1_test);
 
         let sled2_path2_test = d
             .exec(sled2, "ping -N fe80::aae1:deff:fe01:701d fd00:1::1")
@@ -152,6 +155,7 @@ async fn main() -> Result<(), Error> {
         if !sled2_path2_test.contains("fd00:1::1 is alive") {
             return Err(Error::Exec(sled2_path2_test));
         }
+        println!("{}", sled2_path2_test);
 
         let overlay_test = d
             .exec(sled1, "/opt/cargo-bay/test-overlay.sh")
@@ -159,6 +163,7 @@ async fn main() -> Result<(), Error> {
         if !overlay_test.contains("overlay ok!") {
             return Err(Error::Exec(overlay_test));
         }
+        println!("{}", overlay_test);
 
 
     }
