@@ -5,6 +5,8 @@ set -m
 set -o pipefail
 set -o xtrace
 
+export RUST_LOG=debug
+
 #
 # Display kernel information
 #
