@@ -12,6 +12,9 @@
 #: ]
 #:
 #: access_repos = [
+#:   "oxidecomputer/dendrite",
+#:   "oxidecomputer/maghemite",
+#:   "oxidecomputer/p4",
 #:   "oxidecomputer/testbed",
 #: ]
 #:
@@ -28,17 +31,13 @@ set -o xtrace
 
 export RUST_LOG=debug
 
-# List the host's interfaces
-dladm show-link
+
 topdir=$(pwd)
 
-mkdir bin
-
-pushd bin
-curl -OL https://github.com/stedolan/jq/releases/download/jq-1.4/jq-solaris11-64
-mv jq-solaris11-64 jq
-chmod +x jq
-popd
+#
+# Install required build tooling
+#
+pfexec pkg install pkg:/ooce/developer/clang-120@12.0.0-1.0
 
 #
 # Shim calls to github to force https instead of ssh for cloning
@@ -57,20 +56,98 @@ if [[ ! -d falcon ]]; then
 fi
 
 #
-# Clone the testbed repo
-# We need the testbed repo because it contains the particular topology we'll be running
-# in our CI task
+# Clone the softnpu branch of propolis
+# We need this so we can build softnpuadm, which is needed for ASIC emulation
+# in our scrimlet CI nodes
 #
-if [[ ! -d testbed ]]; then
-    git clone https://github.com/oxidecomputer/testbed.git
+if [[ ! -d propolis ]]; then
+    git clone --branch softnpu-dyload https://github.com/oxidecomputer/propolis.git
 fi
+
+pushd propolis
+cargo build --features falcon --release
+mkdir -p "$topdir/bin/propolis"
+cp target/release/lib* "$topdir/bin/propolis"
+cp target/release/propolis-cli* "$topdir/bin/propolis"
+cp target/release/propolis-server* "$topdir/bin/propolis"
+cp target/release/propolis-standalone* "$topdir/bin/propolis"
+cargo clean
+popd
+
+pushd propolis/softnpuadm
+cargo build --release
+mkdir -p "$topdir/fullstack-ci/cargo-bay/softnpuadm"
+cp ../target/release/softnpuadm "$topdir/fullstack-ci/cargo-bay/softnpuadm"
+cargo clean
+popd
+
+#
+# Clone the p4 repo
+# We need the p4 program from this repo for programming softnpu's forwarding logic
+#
+if [[ ! -d p4 ]]; then
+    git clone https://github.com/oxidecomputer/p4.git
+fi
+
+pushd p4
+cargo build --release
+mkdir -p "$topdir/fullstack-ci/cargo-bay/p4"
+cp target/release/lib* "$topdir/fullstack-ci/cargo-bay/p4"
+cp target/release/p4* "$topdir/fullstack-ci/cargo-bay/p4"
+cp target/release/x4c* "$topdir/fullstack-ci/cargo-bay/p4"
+cargo clean
+popd
+
+#
+# Clone the dendrite repo
+# We need to build a custom branch of dendrite in order to use softnpu
+# ASIC emulation
+#
+if [[ ! -d dendrite ]]; then
+    git clone --branch softnpu https://github.com/oxidecomputer/dendrite.git
+fi
+
+pushd dendrite
+cargo build --features softnpu --release
+mkdir -p "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/lib* "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/dpd "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/dsyncd "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/protod "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/swadm "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/tests "$topdir/fullstack-ci/cargo-bay/dendrite"
+cp target/release/xtask "$topdir/fullstack-ci/cargo-bay/dendrite"
+cargo clean
+popd
+
+#
+# Clone the maghemite repo
+# Maghemite is already available on the image, but we need to pull the latest
+# development branch to test dpd integration
+#
+if [[ ! -d maghemite ]]; then
+    git clone --branch dpd-api https://github.com/oxidecomputer/maghemite.git
+fi
+
+pushd maghemite
+cargo build --release
+mkdir -p "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/ddm* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/lib* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/mg* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/solo* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/duo* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/trio* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cp target/release/quartet* "$topdir/fullstack-ci/cargo-bay/maghemite"
+cargo clean
+popd
 
 #
 # Build the halfstack-2x2-ci falcon topology binary for use in our next CI task
 #
-pushd testbed/halfstack-2x2-ci
-cargo build
-cp ../target/debug/halfstack-2x2-ci "$topdir/bin/"
+pushd fullstack-ci
+cargo build --release
+cp target/release/fullstack-ci "$topdir/bin/"
 cargo clean
 popd
 

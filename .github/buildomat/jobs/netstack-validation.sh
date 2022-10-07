@@ -20,9 +20,9 @@
 #: [dependencies.build]
 #: job = "netstack-prepare"
 #
-#
 
 set -e
+set -m
 set -o pipefail
 set -o xtrace
 
@@ -33,7 +33,7 @@ export RUST_LOG=debug
 # aliases that are usually present on end-user machines, but not in CI
 #
 function sha256sum() {
-    command shasum -a 256 $*
+    command shasum -a 256 "$*"
 }
 
 export -f sha256sum
@@ -41,8 +41,8 @@ export -f sha256sum
 #
 # Create etherstub for falcon topology to use as its external link
 #
-pfexec dladm create-etherstub falcon_stub0
-pfexec dladm create-vnic -l falcon_stub0 falcon_vnic0
+dladm show-etherstub falcon_stub0 || pfexec dladm create-etherstub falcon_stub0
+dladm show-vnic falcon_vnic0 || pfexec dladm create-vnic -l falcon_stub0 falcon_vnic0
 
 #
 # This interface is used for the falcon topology (external link)
@@ -54,13 +54,21 @@ export INTERFACE=falcon_stub0
 #
 # This interface is used to reach the internet
 #
-export EXT_INTERFACE=igb0
+if [[ ! -v EXT_INTERFACE ]]; then
+    echo "EXT_INTERFACE has not been set. This will default to igb0."
+    export EXT_INTERFACE=igb0
+fi
+
+if [[ ! -v DISK ]]; then
+    echo "DISK has been set. This will default to c1t1d0"
+    export DISK=c1t1d0
+fi
 
 #
 # Create a private ip address for the host to use for communication with the
 # falcon topology VMs
 #
-pfexec ipadm create-addr -T static -a 192.168.100.100/24 falcon_vnic0/internal
+ipadm show-addr falcon_vnic0/internal || pfexec ipadm create-addr -T static -a 192.168.100.100/24 falcon_vnic0/internal
 
 #
 # Enable packet filtering
@@ -90,6 +98,11 @@ svcs -x ipfilter
 # ipfilter service may randomly flush our rules
 #
 svccfg -s ipfilter:default setprop firewall_config_default/policy = astring: "custom"
+
+if [[ -f ipnat.conf ]]; then
+    rm ipnat.conf
+fi
+
 echo "map $EXT_INTERFACE 192.168.100.0/24 -> 0/32 portmap tcp/udp 1025:65000" >> ipnat.conf
 echo -n "map $EXT_INTERFACE 192.168.100.0/24 -> 0/32 portmap" >> ipnat.conf
 pfexec cp ipnat.conf /etc/ipf/ipnat.conf
@@ -103,28 +116,30 @@ pfexec ipnat -l
 #
 # Extract the tools needed for launching the falcon topology
 #
-mkdir /tmp/netstack-validation
+mkdir -p /tmp/netstack-validation
 pushd /tmp/netstack-validation
 xzcat /input/build/out/build-tools.tar.xz | tar -xf -
 
 #
-# Add jq and halfstack-2x2-ci to our PATH
+# Add jq and fullstack-ci to our PATH
 #
 pushd falcon-image-netstack
 export PATH="$(pwd)/bin:$PATH"
+
+# TODO remove
+ls -lah bin
 
 pushd falcon
 
 #
 # Install tooling and images needed for the falcon topology
 #
-./get-propolis.sh
 ./get-ovmf.sh
 
 #
 # Create the zpool used for extracting our falcon topology images
 #
-pfexec zpool create -f netstack-validation c1t1d0
+pfexec zpool create -f netstack-validation $DISK
 export FALCON_DATASET=netstack-validation/falcon
 
 #
@@ -151,5 +166,5 @@ popd
 #
 # Run the test
 #
-pushd testbed/halfstack-2x2-ci
-pfexec halfstack-2x2-ci launch
+pushd fullstack-ci
+pfexec fullstack-ci launch --propolis "../bin/propolis/propolis-server"
