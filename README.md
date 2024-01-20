@@ -1,6 +1,9 @@
 # falcon-image-netstack
 Netstack image builder for falcon
 
+**Archive Notice**
+This repository is being archived and will eventually be deleted. The netstack is now built into the helios image and this repository is no longer needed.
+
 ## Usage
 ### Triggering a CI build
 
